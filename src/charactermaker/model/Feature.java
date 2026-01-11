@@ -1,4 +1,4 @@
 package charactermaker.model;
 
-public class CharacterFeature {
+public interface Feature {
 }
