@@ -1,5 +1,7 @@
 package charactermaker.model;
- 
+
+import charactermaker.enums.Stat;
+
 /**
  * ChoiceStatBonusFeature.java - description
  *
@@ -7,30 +9,34 @@ package charactermaker.model;
  * @since 19 Dec 2025, 10:37:38 am
  */
 public class ChoiceStatBonusFeature implements RacialFeature{
-    private final String ID, NAME, DESC;
-    private final int COUNT; // сколько выборов
-    private final int BONUS_PER_CHOICE; // обычно 1
+    private final String sourceId;
+    private final int bonus;
+    private final int maxSelections;
     
     public ChoiceStatBonusFeature
-        (String id, String name, String desc, int count, int bonusPerChoice) {
-        ID = id; NAME = name; DESC = desc; 
-        COUNT = count; BONUS_PER_CHOICE = bonusPerChoice;
+        (String sourceId, int bonus, int maxSelections) {
+        this.sourceId = sourceId;
+        this.bonus = bonus;
+        this.maxSelections = maxSelections;
     }
 
     @Override
-    public String getId() { return ID; }
+    public String getName() { return "Ability Score Increase"; }
 
     @Override
-    public String getName() { return NAME; }
-
-    @Override
-    public String getDescription() { return DESC; }
+    public String getDescription() { return "Choose stats to increase"; }
 
     @Override
     public void apply(CharacterHolder character) {
+        // Создаём StatChoice для всех возможных статов
+        for (Stat stat : Stat.values()) {
+                character.addPendingChoice(new StatChoice(sourceId, stat, bonus, maxSelections));
+        }
     }
 
     @Override
     public void remove(CharacterHolder character) {
+        // Удаляем все StatChoice, которые были добавлены этим RacialFeature
+        character.removePendingChoiceBySource(sourceId);
     }
 }
