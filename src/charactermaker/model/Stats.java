@@ -16,7 +16,6 @@ public class Stats
     private final EnumMap<Stat, Integer> racial = new EnumMap<>(Stat.class); // racial bonuses
     private final EnumMap<Stat, Integer> base = new EnumMap<>(Stat.class);
     private final int BASE = 10; // base value
-    private Race currentRace;
 
     public Stats() {
         for (Stat s : Stat.values()){
@@ -32,7 +31,7 @@ public class Stats
         int b = base.get(stat) == null ? 8 : base.get(stat);
         return racial.getOrDefault(stat, 0) + b; }
     public  Integer     getBase(Stat stat)                      { return base.get(stat); }
-    private int         getMod(Stat stat)                       { return (int) Math.floor((getTotal(stat) - BASE) / 2.0); }
+    private int         getMod(Stat stat)                       { return (int) Math.floor((getTotal(stat)-BASE)/2.0); }
    
     @Override
     public String toString(){

@@ -38,10 +38,8 @@ public class CharacterHolder {
 
     public Stats getStats()                 { return stats; }
 
-//    public int getMaxHP()                   { return 10 + stats.; }
-
     public Gender getGender()               { return gender; }
-    public void setGender(Gender gender)    { this.gender = gender; };
+    public void setGender(Gender gender)    { this.gender = gender; }
 
     public Race getRace()                   { return race; }
 
@@ -188,13 +186,14 @@ public class CharacterHolder {
     @Override
     public String toString() {
         String raceName = (race == null) ? "None" : race.getDisplayName();
+        String genderName = (gender == null) ? "Unknown" : gender.getDisplayName();
         return "Character: "    +
                 "\n\tName:\t"   + name                      +
                 "\n\tAge:\t"    + age                       +
-                "\n\tGender:\t" + gender.getDisplayName()   +
+                "\n\tGender:\t" + genderName                +
                 "\n\tLevel:\t"  + level                     +
                 "\n\tRace:\t"   + raceName                  +
-                "\n\tStats:"    + stats.toString();
+                "\n\t"          + stats.toString();
     }
 
     // Optionally add getters for appliedFeatures map as unmodifiable view

@@ -15,19 +15,14 @@ public enum Dice {
     D100(100);
 
     private final int maxSides;
-//    private final int minNumber;
-    Dice(int maxSides){
-        this.maxSides = maxSides;
-//        minNumber = 1;
-    }
-
-    public int roll(){ return ThreadLocalRandom.current().nextInt(1, maxSides + 1); }
+    Dice(int maxSides)        { this.maxSides = maxSides; }
+    public int roll()         { return ThreadLocalRandom.current().nextInt(1, maxSides + 1); }
     public int roll(int count){
         int sum = 0;
         for (int i = 0; i < count; i++) { sum += ThreadLocalRandom.current().nextInt(1, maxSides + 1); }
         return sum;
     }
-    public int statRoll(){
+    public int statRoll()     {
         int sum = 0;
         int [] numbers = new int[4];
         for (int i = 0; i < 4; i++) {
