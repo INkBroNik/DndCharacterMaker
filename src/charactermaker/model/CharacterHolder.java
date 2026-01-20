@@ -3,8 +3,9 @@ package charactermaker.model;
 import charactermaker.enums.Gender;
 import charactermaker.enums.Race;
 import charactermaker.enums.Stat;
-
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Character - description
@@ -25,6 +26,7 @@ public class CharacterHolder {
     private final Map<String, Integer> appliedChoicesCount = new HashMap<>();
     private final List<Choice> appliedChoices = new ArrayList<>();
 
+    private static final Logger LOGGER = Logger.getLogger(CharacterHolder.class.getName());
     // ---------------- basic getters/setters ----------------
 
     public String getName()                 { return name; }
@@ -62,7 +64,7 @@ public class CharacterHolder {
                 try {
                     feature.remove(this);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.log(Level.WARNING, "Could not remove feature " + feature.getName(), e);
                 }
             }
 
@@ -83,7 +85,9 @@ public class CharacterHolder {
             }
         } catch (RuntimeException e){
             for (int i = appliedNow.size(); i >= 0; i--) {
-                try { appliedNow.get(i).remove(this); } catch (Exception ignored){ ignored.printStackTrace(); }
+                try { appliedNow.get(i).remove(this); } catch (Exception ignored){
+                    LOGGER.log(Level.WARNING, "Could not remove feature " + appliedNow.get(i).getName(), ignored);
+                }
             }
             throw e;
         }
@@ -213,7 +217,7 @@ public class CharacterHolder {
     public boolean isBaseAssigned(Stat stat)        { return this.getStats().getBase(stat) != null; }
     public void setBaseStat(Stat stat, int value)   {
         if( isBaseAssigned(stat) ) { throw new IllegalStateException(stat + " is already assigned"); }
-        this.getStats().addBaseStats(stat, value);
+        this.getStats().setBase(stat, value);
     }
     public void clearBaseStat(Stat stat)            { this.getStats().removeBase(stat);             }
     public void resetBaseStats() {for (Stat s : Stat.values()) { clearBaseStat(s); } }
@@ -229,7 +233,7 @@ public class CharacterHolder {
                 "\n\tGender:\t" + genderName                +
                 "\n\tLevel:\t"  + level                     +
                 "\n\tRace:\t"   + raceName                  +
-                "\n\t"          + stats.toString();
+                "\t"          + stats.toString();
     }
 
     // Optionally add getters for appliedFeatures map as unmodifiable view

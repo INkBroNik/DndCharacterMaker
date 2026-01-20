@@ -1,6 +1,5 @@
 package charactermaker.model;
  
-import charactermaker.enums.Race;
 import charactermaker.enums.Stat;
 
 import java.util.EnumMap;
@@ -29,7 +28,7 @@ public class Stats
         int now = old + value;
         racial.put(stat, now);
     }
-    public  void        addBaseStats(Stat stat, int value)      { base.put(stat, value); }
+    public  void        setBase(Stat stat, int value)      { base.put(stat, value); }
     public  void        removeBase(Stat stat)                   { base.put(stat, null); }
     public  int         getTotal(Stat stat)                         {
         int b = base.get(stat) == null ? 8 : base.get(stat);

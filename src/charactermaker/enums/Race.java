@@ -1,6 +1,7 @@
 package charactermaker.enums;
 
 import charactermaker.model.ChoiceStatBonusFeature;
+import charactermaker.model.FeatureIds;
 import charactermaker.model.RacialFeature;
 import charactermaker.model.StatBonusFeature;
 import java.util.List;
@@ -35,7 +36,7 @@ public enum Race {
                 "Charismatic and versatile, inheriting both humans and elves.",
                 "HALF_ELF", NameCulture.HALF_ELF,
                 new StatBonusFeature(Stat.CHA, 2),
-                new ChoiceStatBonusFeature("HALF_ELF_STAT_CHOICE", 1, 2)),
+                new ChoiceStatBonusFeature("HALF_ELF:" + FeatureIds.STAT_CHOICE, 1, 2)),
     HALFLING    ("Halfling",
                 "Lucky and nimble, hard to hit.",
                 "HALFLING", NameCulture.HALFLING,
