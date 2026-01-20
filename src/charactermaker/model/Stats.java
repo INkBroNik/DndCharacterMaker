@@ -24,13 +24,18 @@ public class Stats
         }
     }
 
-    public  void        addRacialBonuses(Stat stat, int value)  { racial.put(stat, value); }
+    public  void        addRacialBonuses(Stat stat, int value)  {
+        int old = racial.getOrDefault(stat, 0);
+        int now = old + value;
+        racial.put(stat, now);
+    }
     public  void        addBaseStats(Stat stat, int value)      { base.put(stat, value); }
     public  void        removeBase(Stat stat)                   { base.put(stat, null); }
     public  int         getTotal(Stat stat)                         {
         int b = base.get(stat) == null ? 8 : base.get(stat);
         return racial.getOrDefault(stat, 0) + b; }
     public  Integer     getBase(Stat stat)                      { return base.get(stat); }
+    public  Integer     getRacial(Stat stat)                    { return racial.get(stat); }
     private int         getMod(Stat stat)                       { return (int) Math.floor((getTotal(stat)-BASE)/2.0); }
    
     @Override

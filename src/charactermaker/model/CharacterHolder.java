@@ -50,7 +50,6 @@ public class CharacterHolder {
      * newRace == null will remove current race.
      */
     public void applyRace(Race newRace) {
-        System.out.println(newRace.getDisplayName());
         // 1. Если раса уже была — корректно убираем её
         if (this.race != null) {
             String oldRaceId = this.race.getId();
@@ -72,7 +71,6 @@ public class CharacterHolder {
 
         if (newRace == null) {
             this.race = null;
-            System.out.println(race.getDisplayName());
             return;
         }
 
@@ -214,7 +212,7 @@ public class CharacterHolder {
 
     public boolean isBaseAssigned(Stat stat)        { return this.getStats().getBase(stat) != null; }
     public void setBaseStat(Stat stat, int value)   {
-        if( isBaseAssigned(stat) ) { throw new IllegalStateException(stat + "is already assigned"); }
+        if( isBaseAssigned(stat) ) { throw new IllegalStateException(stat + " is already assigned"); }
         this.getStats().addBaseStats(stat, value);
     }
     public void clearBaseStat(Stat stat)            { this.getStats().removeBase(stat);             }

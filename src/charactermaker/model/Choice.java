@@ -36,7 +36,7 @@ public class Choice {
         this.maxSelections = Math.max(1, maxSelections);
         this.exactRequired = exactRequired;
         this.applyAction = Objects.requireNonNull(applyAction);
-        this.removeAction = Objects.requireNonNull(removeAction);
+        this.removeAction = removeAction;
     }
 
     public String getGroupId()       { return groupId;          }

@@ -25,10 +25,12 @@ public class CharacterMaker
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        showMessage("Hello");
-        String userChose = getChose();
-        if (userChose.equalsIgnoreCase(USER_CHOSE[0])) new Set();
-        if (userChose.equalsIgnoreCase(USER_CHOSE[2])) System.exit(0);
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            showMessage("Hello");
+            String userChose = getChose();
+            if (userChose.equalsIgnoreCase(USER_CHOSE[0])) new Set();
+            if (userChose.equalsIgnoreCase(USER_CHOSE[2])) System.exit(0);
+        });
     }
     
     /**
