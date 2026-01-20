@@ -9,13 +9,13 @@ import charactermaker.enums.Stat;
  * @since 19 Dec 2025, 10:37:38 am
  */
 public class ChoiceStatBonusFeature implements RacialFeature{
-    private final String sourceId;
+    private final String groupId;
     private final int bonus;
     private final int maxSelections;
     
     public ChoiceStatBonusFeature
-        (String sourceId, int bonus, int maxSelections) {
-        this.sourceId = sourceId;
+        (String raceId, int bonus, int maxSelections) {
+        this.groupId = raceId + ":" + FeatureIds.STAT_CHOICE;
         this.bonus = bonus;
         this.maxSelections = maxSelections;
     }
@@ -30,13 +30,19 @@ public class ChoiceStatBonusFeature implements RacialFeature{
     public void apply(CharacterHolder character) {
         // Создаём StatChoice для всех возможных статов
         for (Stat stat : Stat.values()) {
-                character.addPendingChoice(new StatChoice(sourceId, stat, bonus, maxSelections));
+                character.addPendingChoice(new Choice(
+                        groupId, stat.name(), stat.getName() + "+" + bonus,
+                        "Increase " + stat.getName() + " by " + bonus,
+                        maxSelections, true,
+                        c -> c.getStats().addRacialBonuses(stat, bonus),
+                        c -> c.getStats().addRacialBonuses(stat, -bonus)
+                ));
         }
     }
 
     @Override
     public void remove(CharacterHolder character) {
         // Удаляем все StatChoice, которые были добавлены этим RacialFeature
-        character.removePendingChoiceBySource(sourceId);
+        character.removeChoicesByGroupPrefix(groupId);
     }
 }

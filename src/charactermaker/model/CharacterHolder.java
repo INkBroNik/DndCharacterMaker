@@ -50,39 +50,47 @@ public class CharacterHolder {
      * newRace == null will remove current race.
      */
     public void applyRace(Race newRace) {
+        System.out.println(newRace.getDisplayName());
         // 1. Если раса уже была — корректно убираем её
         if (this.race != null) {
-
             String oldRaceId = this.race.getId();
 
             // 1.1 Откатываем ВСЕ применённые choices этой расы
-            appliedChoices.removeIf(choice -> {
-                if (choice.getSourceId().startsWith(oldRaceId)) {
-                    choice.remove(this);
-                    return true;
-                }
-                return false;
-            });
+            removeChoicesByGroupPrefix(oldRaceId);
 
             // 1.2 Убираем racial features
             for (RacialFeature feature : appliedFeatures) {
-                feature.remove(this);
+                try {
+                    feature.remove(this);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             appliedFeatures.clear();
+        }
 
-            // 1.3 Чистим служебные структуры
-            pendingChoices.removeIf(c -> c.getSourceId().startsWith(oldRaceId));
-            appliedChoicesCount.keySet().removeIf(k -> k.startsWith(oldRaceId));
+        if (newRace == null) {
+            this.race = null;
+            System.out.println(race.getDisplayName());
+            return;
         }
 
         // 2. Применяем новую расу
-        this.race = newRace;
-
-        for (RacialFeature feature : newRace.getFeatures()) {
-            feature.apply(this);
-            appliedFeatures.add(feature);
+        List<RacialFeature> appliedNow =  new ArrayList<>();
+        try{
+            for (RacialFeature feature : newRace.getFeatures()) {
+                feature.apply(this);
+                appliedNow.add(feature);
+            }
+        } catch (RuntimeException e){
+            for (int i = appliedNow.size(); i >= 0; i--) {
+                try { appliedNow.get(i).remove(this); } catch (Exception ignored){ ignored.printStackTrace(); }
+            }
+            throw e;
         }
+        this.race = newRace;
+        appliedFeatures.addAll(appliedNow);
     }
 
     // ---------------- pending choices API ----------------
@@ -91,12 +99,10 @@ public class CharacterHolder {
      * Add a pending choice. Prevents nulls and duplicates by sourceId+name.
      */
     public void addPendingChoice(Choice choice) {
-        if (choice == null) throw new IllegalArgumentException("choice == null");
-        // avoid duplicate exact same choice object or same source+name
+        Objects.requireNonNull(choice, "choice == null");
+        // avoid duplicate exact same choice object by choiceid
         boolean exists = pendingChoices.stream().anyMatch(
-                c -> Objects.equals(c.getSourceId(), choice.getSourceId())
-                        && Objects.equals(c.getName(), choice.getName())
-        );
+                c -> Objects.equals(c.getChoiceId(), choice.getChoiceId()));
         if (!exists) pendingChoices.add(choice);
     }
 
@@ -118,20 +124,22 @@ public class CharacterHolder {
      * Resolve (apply) the choice using model validation and counters.
      * This method will throw IllegalStateException if limit exceeded.
      */
-    public void resolveChoice(Choice choice, int maxForSource) {
-        applyChoice(choice, maxForSource);
+    public void resolveChoice(Choice choice) {
+        Objects.requireNonNull(choice, "choice == null");
+        applyChoice(choice, choice.getMaxSelections());
     }
 
-    void removePendingChoiceBySource(String sourceId) {
-        pendingChoices.removeIf(c -> c.getSourceId().equals(sourceId));
+    void removePendingChoiceByGroupExact(String groupId) {
+        Objects.requireNonNull(groupId, "groupId == null");
+        pendingChoices.removeIf(c -> groupId.equals(c.getGroupId()));
     }
 
-    public void removeChoicesBySource(String sourceId) {
-        // удаляем неподтверждённые выборы
-        pendingChoices.removeIf(c -> c.getSourceId().equals(sourceId));
-
-        // сбрасываем счётчик применённых выборов
-        appliedChoicesCount.remove(sourceId);
+    public void removePendingChoicesByGroupPrefix(String groupPrefix) {
+        Objects.requireNonNull(groupPrefix, "groupPrefix == null");
+        pendingChoices.removeIf( c -> {
+            String gid = c.getGroupId();
+            return gid.equals(groupPrefix) || gid.startsWith(groupPrefix + ":");
+        });
     }
     // ---------------- choice counters & application ----------------
 
@@ -147,22 +155,52 @@ public class CharacterHolder {
      * This method updates counters and removes the choice from pending list.
      */
     public void applyChoice(Choice choice, int max) {
-        if (choice == null) throw new IllegalArgumentException("choice == null");
-        String id = choice.getSourceId();
-        if (id == null) id = ""; // defensive
-
-        if (!canApplyChoice(id, max)) {
-            throw new IllegalStateException("Too many choices applied for: " + id);
+        Objects.requireNonNull(choice, "choice == null");
+        String gid = choice.getGroupId();
+        String cid = choice.getChoiceId();
+        // защита: не применять один и тот же choice дважды
+        if (appliedChoices.stream().anyMatch(c -> c.getChoiceId().equals(cid))) {
+            throw new IllegalStateException("Choice already applied: " + cid);
         }
 
-        // apply action (Choice should encapsulate its action)
-        choice.apply(this);
-        appliedChoices.add(choice);
+        // проверка лимита группы
+        int used = appliedChoicesCount.getOrDefault(gid, 0);
+        if (used >= max) {
+            throw new IllegalStateException("Too many choices for group " + gid);
+        }
 
-        appliedChoicesCount.put(id, appliedChoicesCount.getOrDefault(id, 0) + 1);
-        pendingChoices.remove(choice);
+        // apply — здесь apply может бросить (например, setBaseStat итд.)
+        choice.apply(this);
+
+        // если всё успешно — фиксируем
+        appliedChoices.add(choice);
+        appliedChoicesCount.put(gid, used + 1);
+        pendingChoices.removeIf(p -> p.getChoiceId().equals(cid));
     }
 
+    public void removeChoicesByGroupPrefix(String groupPrefix) {
+        Objects.requireNonNull(groupPrefix, "groupPrefix == null");
+        if(appliedChoices != null){
+            Iterator<Choice> it = appliedChoices.iterator();
+            while (it.hasNext()) {
+                Choice choice = it.next();
+                String gid = choice.getGroupId();
+                if(gid.equals(groupPrefix) || gid.startsWith(groupPrefix + ":")){
+                    try { choice.remove(this); } catch (Exception e) { e.printStackTrace(); }
+                    it.remove();
+                }
+            }
+        }
+
+        // 2) Удалить pending choices из модели
+        pendingChoices.removeIf(c -> {
+            String gid = c.getGroupId();
+            return gid.equals(groupPrefix) || gid.startsWith(groupPrefix + ":");
+        });
+
+        // 3) Удалить счётчики применённых по группе
+        appliedChoicesCount.keySet().removeIf(k -> k.equals(groupPrefix) || k.startsWith(groupPrefix + ":"));
+    }
     // ----------------------- Stats ----------------------
 
     public List<Stat> getUnassignedStats() {

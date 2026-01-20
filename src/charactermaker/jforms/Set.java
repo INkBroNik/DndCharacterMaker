@@ -69,6 +69,7 @@ public class Set extends JFrame
         });
 
         ROLL.addActionListener( e -> {
+            for (Stat s : Stat.values()) { if(character.isBaseAssigned(s)) character.clearBaseStat(s); }
             List<Integer> rolledValues = new ArrayList<>();
             for (int i = 0; i < 6; i++) {
                 rolledValues.add(Dice.D6.statRoll());
@@ -110,6 +111,7 @@ public class Set extends JFrame
         });
 
         PRE_SET_SET.addActionListener(e -> {
+            for (Stat s : Stat.values()) { if(character.isBaseAssigned(s)) character.clearBaseStat(s); }
             List<Integer> preSetValues = List.of(15, 14, 13, 12, 10, 8);
             PRE_SET_OUTPUT.setText("Roll: " + preSetValues.toString());
             for (int value : preSetValues) {
@@ -144,7 +146,7 @@ public class Set extends JFrame
 
         PRE_SET_RESET.addActionListener(e -> {
             character.resetBaseStats();
-            RANDOM_OUTPUT.setText("Base stats been re-set");
+            PRE_SET_OUTPUT.setText("Base stats been re-set");
         });
 
         applyButton.addActionListener(e -> applyValues());
@@ -287,9 +289,7 @@ public class Set extends JFrame
         return sum;
     }
 
-    private int costOf(int value){
-        return costTable.getOrDefault(value, Integer.MAX_VALUE);
-    }
+    private int costOf(int value){ return costTable.getOrDefault(value, Integer.MAX_VALUE); }
 
     private void applyValues() {
         if(!applyButton.isEnabled()) {

@@ -8,7 +8,8 @@ import java.util.function.Consumer;
  */
 public class Choice {
 
-    private final String sourceId;
+    private final String groupId;
+    private final String choiceId;
     private final String name;          // Название варианта (отображается в UI)
     private final String description;   // Подробное описание, что делает выбор
     private final int maxSelections;      // сколько можно выбрать из этой группы
@@ -23,21 +24,23 @@ public class Choice {
      * @param applyAction действие, которое будет выполнено на CharacterHolder
      */
     public Choice(
-            String sourceId, String name, String description,
+            String groupId,String localChoiceId, String name, String description,
             int maxSelections, boolean exactRequired,
             Consumer<CharacterHolder> applyAction,
             Consumer<CharacterHolder> removeAction
     ) {
-        this.sourceId = Objects.requireNonNull(sourceId);
+        this.groupId = Objects.requireNonNull(groupId);
+        this.choiceId = groupId + ":" + Objects.requireNonNull(localChoiceId);
         this.name = Objects.requireNonNull(name);
         this.description = description == null ? "" : description;
         this.maxSelections = Math.max(1, maxSelections);
         this.exactRequired = exactRequired;
         this.applyAction = Objects.requireNonNull(applyAction);
-        this.removeAction = removeAction;
+        this.removeAction = Objects.requireNonNull(removeAction);
     }
 
-    public String getSourceId()      { return sourceId;          }
+    public String getGroupId()       { return groupId;          }
+    public String getChoiceId()      { return choiceId; }
     public String getName()          { return name;              }
     public String getDescription()   { return description;       }
     public int getMaxSelections()    { return maxSelections;     }
