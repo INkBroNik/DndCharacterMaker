@@ -13,7 +13,7 @@ public class BaseStatAllocationFeature implements Feature{
     public BaseStatAllocationFeature(int points, boolean exactRequired) {
         this.points = Math.max(points, 1);
         this.exactRequired = exactRequired;
-        this.groupId = FeatureIds.BASE_STAT;
+        this.groupId = FeatureIds.BASE_STAT.getId();
     }
 
     @Override
