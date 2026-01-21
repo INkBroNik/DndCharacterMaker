@@ -1,5 +1,6 @@
 package charactermaker.model;
 
+import charactermaker.enums.FeatureIds;
 import charactermaker.enums.Stat;
 
 /**

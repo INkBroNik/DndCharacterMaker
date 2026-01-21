@@ -203,7 +203,7 @@ public class CharacterHolder {
         // 3) Удалить счётчики применённых по группе
         appliedChoicesCount.keySet().removeIf(k -> k.equals(groupPrefix) || k.startsWith(groupPrefix + ":"));
     }
-    // ----------------------- Stats ----------------------
+    // ------------------------------------------- Stats ------------------------------------------------------------
 
     public List<Stat> getUnassignedStats() {
         List<Stat> result = new ArrayList<>();
@@ -221,6 +221,53 @@ public class CharacterHolder {
     }
     public void clearBaseStat(Stat stat)            { this.getStats().removeBase(stat);             }
     public void resetBaseStats() {for (Stat s : Stat.values()) { clearBaseStat(s); } }
+
+    //--------------------------------Allocation----------------------------
+
+    public void applyAllocation(StatAllocation allocation, boolean force) {
+        Objects.requireNonNull(allocation, "allocation == null");
+        allocation.validateComplete();
+
+        boolean anyAssigned = false;
+        for (Stat s : Stat.values()) {
+            if (this.isBaseAssigned(s)) { anyAssigned = true; break; }
+        }
+        if (anyAssigned && !force) {
+            throw new IllegalStateException("Some base stats already assigned; use force=true to overwrite");
+        }
+
+        EnumMap<Stat, Integer> old = new EnumMap<>(Stat.class);
+        try{
+            for(Stat s : Stat.values()){
+                Integer prev = this.getStats().getBase(s);
+                old.put(s, prev);
+            }
+            // set new ones
+            for (Map.Entry<Stat, Integer> e : allocation.asMap().entrySet()) {
+                Stat stat = e.getKey();
+                Integer value = e.getValue();
+                // use CharacterHolder.setBaseStat if you have higher-level checks; fallback to Stats.setBase
+                try {
+                    this.setBaseStat(stat, value); // recommended method on CharacterHolder
+                } catch (RuntimeException ex) {
+                    // if setBaseStat throws (e.g., assigned and no force) rethrow and rollback below
+                    throw ex;
+                }
+            }
+        } catch (RuntimeException ex) {
+            // rollback to old
+            for (Stat s : Stat.values()) {
+                Integer v = old.get(s);
+                if (v == null) {
+                    this.getStats().removeBase(s); // clear
+                } else {
+                    this.getStats().setBase(s, v);
+                }
+            }
+            throw ex;
+        }
+    }
+
     // ---------------- toString / utility ----------------
 
     @Override

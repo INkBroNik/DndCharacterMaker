@@ -1,6 +1,6 @@
 package charactermaker;
 
-import charactermaker.jforms.Set;
+import charactermaker.jforms.SetWindow;
 import javax.swing.JOptionPane;
 
 
@@ -28,7 +28,7 @@ public class CharacterMaker
         javax.swing.SwingUtilities.invokeLater(() -> {
             showMessage("Hello");
             String userChose = getChose();
-            if (userChose.equalsIgnoreCase(USER_CHOSE[0])) new Set();
+            if (userChose.equalsIgnoreCase(USER_CHOSE[0])) new SetWindow();
             if (userChose.equalsIgnoreCase(USER_CHOSE[2])) System.exit(0);
         });
     }

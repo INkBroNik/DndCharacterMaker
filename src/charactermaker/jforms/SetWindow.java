@@ -1,12 +1,11 @@
 package charactermaker.jforms;
 
-import charactermaker.enums.Dice;
 import charactermaker.enums.Gender;
 import charactermaker.enums.Race;
 import charactermaker.enums.Stat;
-import charactermaker.model.CharacterHolder;
+import charactermaker.model.*;
 import charactermaker.model.Choice;
-import charactermaker.model.Stats;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -15,24 +14,23 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Set.java - Class for all UI
+ * SetWindow.java - Class for all UI
  *
  * @author Nikita Padalka
  * @since 13 Dec 2025, 7:52:38 pm
  */
-public class Set extends JFrame
+public class SetWindow extends JFrame
 {
     private final int WEIDTH;
     private final int HIGHT;
     private final Dimension dimension;
     private final GridLayout gridLayout;
     private final CharacterHolder character = new CharacterHolder();
-    private final Stats stats = new Stats();
 
     /**
      * Default constructor, set class properties
      */
-    public Set() {
+    public SetWindow() {
         WEIDTH = 200;
         HIGHT = 50;
         dimension = new Dimension(WEIDTH, HIGHT);
@@ -54,7 +52,7 @@ public class Set extends JFrame
                     showChoiceDialog(character, character.getPendingChoices(), 2, true);
                 }
 
-                System.out.println(character.toString());
+                System.out.println(character);
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog
                         (this, "ERORR!\n Please reenter the fields!",
@@ -69,40 +67,11 @@ public class Set extends JFrame
         });
 
         ROLL.addActionListener( e -> {
-            for (Stat s : Stat.values()) { if(character.isBaseAssigned(s)) character.clearBaseStat(s); }
-            List<Integer> rolledValues = new ArrayList<>();
-            for (int i = 0; i < 6; i++) {
-                rolledValues.add(Dice.D6.statRoll());
-            }
-            RANDOM_OUTPUT.setText("Roll: " + rolledValues.toString());
-            for (int value : rolledValues){
-                while (true) {
-                    Stat chosen = showStatSelectionDialog(this, character, value);
-                    if(chosen == null){
-                        int confirm = JOptionPane.showConfirmDialog(
-                                this,
-                                "Cancel stat distribution?\nAll assigned base stats will be cleared.",
-                                "Confirm cancel",
-                                JOptionPane.YES_NO_OPTION,
-                                JOptionPane.WARNING_MESSAGE
-                        );
-
-                        if (confirm == JOptionPane.YES_OPTION) {
-                            // ❗ СБРОС ВСЕХ base-статов
-                            character.resetBaseStats();
-                            RANDOM_OUTPUT.setText("Base stats been re-set");
-                            return; // полностью выходим из распределения
-                        } else {
-                            // пользователь передумал — показываем диалог снова
-                            continue;
-                        }
-                    }
-
-                    character.setBaseStat(chosen, value);
-                    break;
-                }
-            }
-            System.out.println(character.toString());
+            cleanTheBaseStats();
+            StatAllocation allocation = new StatAllocation();
+            StatGenerationRule rule = new DiceRollRule();
+            List<Integer> rolledValues = rule.generate();
+            showStatSelection(rolledValues, allocation, RANDOM_OUTPUT);
         });
 
         RANDOM_RESET.addActionListener(e -> {
@@ -111,37 +80,11 @@ public class Set extends JFrame
         });
 
         PRE_SET_SET.addActionListener(e -> {
-            for (Stat s : Stat.values()) { if(character.isBaseAssigned(s)) character.clearBaseStat(s); }
-            List<Integer> preSetValues = List.of(15, 14, 13, 12, 10, 8);
-            PRE_SET_OUTPUT.setText("Roll: " + preSetValues.toString());
-            for (int value : preSetValues) {
-                while (true) {
-                    Stat chosen = showStatSelectionDialog(this, character, value);
-                    if(chosen == null){
-                        int confirm = JOptionPane.showConfirmDialog(
-                                this,
-                                "Cancel stat distribution?\nAll assigned base stats will be cleared.",
-                                "Confirm cancel",
-                                JOptionPane.YES_NO_OPTION,
-                                JOptionPane.WARNING_MESSAGE
-                        );
-
-                        if (confirm == JOptionPane.YES_OPTION) {
-                            // ❗ СБРОС ВСЕХ base-статов
-                            character.resetBaseStats();
-                            PRE_SET_OUTPUT.setText("Base stats been re-set");
-                            return; // полностью выходим из распределения
-                        } else {
-                            // пользователь передумал — показываем диалог снова
-                            continue;
-                        }
-                    }
-
-                    character.setBaseStat(chosen, value);
-                    break;
-                }
-            }
-            System.out.println(character.toString());
+            cleanTheBaseStats();
+            StatAllocation allocation = new StatAllocation();
+            StatGenerationRule rule = new StandardArrayRule();
+            List<Integer> preSetValues = rule.generate();
+            showStatSelection(preSetValues, allocation, PRE_SET_OUTPUT);
         });
 
         PRE_SET_RESET.addActionListener(e -> {
@@ -149,14 +92,59 @@ public class Set extends JFrame
             PRE_SET_OUTPUT.setText("Base stats been re-set");
         });
 
-        applyButton.addActionListener(e -> applyValues());
+        applyButton.addActionListener(e -> {
+            cleanTheBaseStats();
+            StatAllocation allocation = new StatAllocation();
+            for(Map.Entry<Stat, JSpinner> entry : spinnerMap.entrySet()) {
+                allocation.assign(entry.getKey(), (Integer) entry.getValue().getValue());
+            }
+
+            try{
+                int cost = pointBuyRule.totalCost(allocation.asMap());
+                if(cost > pointBuyRule.getBudget()){
+                    JOptionPane.showMessageDialog(this,
+                            "Too many points used: " + cost + " > " + pointBuyRule.getBudget(),
+                            "Budget exceeded", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch(IllegalArgumentException ex){
+                JOptionPane.showMessageDialog(this, "Invalid stat values: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            try{
+                character.applyAllocation(allocation, false);
+            } catch(IllegalArgumentException ex){
+                int res = JOptionPane.showConfirmDialog(this, "Some base stats already set. Overwrite?", "Confirm overwrite", JOptionPane.YES_NO_OPTION);
+                if(res == JOptionPane.YES_OPTION){
+                    try{
+                        character.applyAllocation(allocation, true);
+                    } catch (RuntimeException ex2) {
+                        JOptionPane.showMessageDialog(this, "Failed to apply allocation: " + ex2.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            } catch(RuntimeException ex){
+                JOptionPane.showMessageDialog(this, "Failed to apply allocation: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            JOptionPane.showMessageDialog(this, "Applied base stats.");
+            System.out.println(character);
+        });
+
+        resetButton.addActionListener(e -> {
+           for (JSpinner spinner : spinnerMap.values()) spinner.setValue(8);
+           onSpinnerChanged(null);
+        });
 
         BASE_ITEM.addActionListener(e -> CARD_LAYOUT.show(CARDS_PANEL, "BASE"));
         RANDOM_SUB_ITEM.addActionListener(e -> CARD_LAYOUT.show(CARDS_PANEL, "RANDOM"));
         PRE_SET_SUB_ITEM.addActionListener(e -> CARD_LAYOUT.show(CARDS_PANEL, "PRE-SET"));
         POINT_BUY_SUB_ITEM.addActionListener(e -> CARD_LAYOUT.show(CARDS_PANEL, "POINT-BUY"));
 
-        setDefaultCloseOperation(Set.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(SetWindow.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         pack();
         setResizable(false);
@@ -257,8 +245,23 @@ public class Set extends JFrame
         dialog.setVisible(true);
     }
 
-    private Stat showStatSelectionDialog (Window parent, CharacterHolder character, int value){
-        List<Stat> options = character.getUnassignedStats();
+    private Stat showStatSelectionDialog
+            (Window parent, CharacterHolder character, StatAllocation allocation,int value){
+        EnumSet<Stat> taken = EnumSet.noneOf(Stat.class);
+
+        for (Stat s : Stat.values()) {
+            if(character.isBaseAssigned(s)) taken.add(s);
+        }
+        taken.addAll(allocation.asMap().keySet());
+
+        EnumSet<Stat> available = EnumSet.allOf(Stat.class);
+        available.removeAll(taken);
+
+        if(available.isEmpty()) return null;
+
+        List<Stat> options = new ArrayList<>();
+        for (Stat s : Stat.values()) { if(available.contains(s)) options.add(s); }
+
         if(options.isEmpty()) return null;
 
         String message = "Assign value " + value + " to which stat?";
@@ -270,42 +273,80 @@ public class Set extends JFrame
         );
     }
 
-    private void onSpinnerChanged(ChangeEvent e) { refreshRemaining(); }
+    private void showStatSelection(List<Integer> values, StatAllocation allocation, JTextField output){
+        output.setText("Roll: " + values.toString());
+        for (int value : values){
+            while (true) {
+                Stat chosen = showStatSelectionDialog(this, character, allocation ,value);
+                if(chosen == null){
+                    int confirm = JOptionPane.showConfirmDialog(
+                            this,
+                            "Cancel stat distribution?\nAll assigned base stats will be cleared.",
+                            "Confirm cancel",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
 
-    private void refreshRemaining(){
-        int used = totalCost();
-        int left = BUDGET - used;
-        remainingLabel.setText("Remaining: " + left);
-        remainingLabel.setForeground(left < 0 ? Color.RED : Color.BLACK);
-        applyButton.setEnabled(left >= 0);
-    }
-
-    private int totalCost(){
-        int sum = 0;
-        for (JSpinner spinner : spinnerMap.values()){
-            int value = (Integer)spinner.getValue();
-            sum += costOf(value);
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        // ❗ СБРОС ВСЕХ base-статов
+                        for (Stat s : Stat.values()) allocation.clear(s);
+                        output.setText("Base stats been re-set");
+                        return; // полностью выходим из распределения
+                    } else {
+                        // пользователь передумал — показываем диалог снова
+                        continue;
+                    }
+                }
+                try {
+                    allocation.assign(chosen, value);
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
+                break;
+            }
         }
-        return sum;
-    }
-
-    private int costOf(int value){ return costTable.getOrDefault(value, Integer.MAX_VALUE); }
-
-    private void applyValues() {
-        if(!applyButton.isEnabled()) {
-            JOptionPane.showMessageDialog
-                    (this, "Too many points used!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        for (Stat s : Stat.values()){
-            if(character.isBaseAssigned(s)) character.clearBaseStat(s);
-            character.setBaseStat(s, (Integer) spinnerMap.get(s).getValue());
+        try{
+            character.applyAllocation(allocation, false);
+        } catch (RuntimeException ex) {
+            JOptionPane.showMessageDialog(this, "Failed to apply allocation: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
         System.out.println(character.toString());
     }
 
+    private void onSpinnerChanged(ChangeEvent e) {
+        EnumMap<Stat, Integer> assigned = new  EnumMap<>(Stat.class);
+        for(Map.Entry<Stat, JSpinner> entry : spinnerMap.entrySet()) {
+            assigned.put(entry.getKey(), (Integer)entry.getValue().getValue());
+        }
+
+        int used;
+        try{
+            used = pointBuyRule.totalCost(assigned);
+        } catch (IllegalArgumentException ex) {
+            remainingLabel.setText("Invalid value");
+            remainingLabel.setForeground(Color.RED);
+            applyButton.setEnabled(false);
+            return;
+        }
+
+        int remaining = pointBuyRule.getBudget() - used;
+        remainingLabel.setText("Remaining: " + remaining);
+        remainingLabel.setForeground(remaining < 0  ? Color.RED : Color.GREEN);
+        applyButton.setEnabled(remaining >= 0);
+
+        for(Map.Entry<Stat, JSpinner> entry : spinnerMap.entrySet()) {
+            int v = (Integer)entry.getValue().getValue();
+            int cost = pointBuyRule.costOf(v);
+            entry.getValue().setToolTipText("Value " + v + " - cost: " + (cost == Integer.MAX_VALUE ? "N/A" : cost));
+        }
+    }
+
+    private void cleanTheBaseStats() {
+        for (Stat s : Stat.values()) { if(character.isBaseAssigned(s)) character.clearBaseStat(s); }
+    }
     /**
-     * Set the window
+     * SetWindow the window
      */
     private void set(){
         //------------------------------------------------Main Frame--------------------------------------------------//
@@ -345,22 +386,25 @@ public class Set extends JFrame
         PRE_SET_PARAM.add(PRE_SET_RESET);
         //----------------------------------------------Point-Buy Panel-----------------------------------------------//
         POIT_BUY_PARAM.setLayout(new BorderLayout(5,5));
-        JPanel grid = new JPanel(new GridLayout(Stat.values().length,2,5,5));
+        JPanel grid = new JPanel(new GridLayout(Stat.values().length,3,5,5));
         ChangeListener listener = this::onSpinnerChanged;
         for (Stat s : Stat.values()){
             SpinnerNumberModel model = new SpinnerNumberModel(8,8,15,1);
             JSpinner spinner = new JSpinner(model);
+            ((JSpinner.DefaultEditor)spinner.getEditor()).getTextField().setColumns(2);
+            spinner.setToolTipText("Cost: " + pointBuyRule.costOf(8));
             spinner.addChangeListener(listener);
             spinnerMap.put(s, spinner);
             grid.add(new JLabel(s.getName()));
             grid.add(spinner);
         }
-        POIT_BUY_PARAM.add(grid, BorderLayout.CENTER);
+
         JPanel buttonPanel = new JPanel(new GridLayout(1,2,5,5));
         buttonPanel.add(remainingLabel);
         buttonPanel.add(applyButton);
+        buttonPanel.add(resetButton);
+        POIT_BUY_PARAM.add(grid, BorderLayout.CENTER);
         POIT_BUY_PARAM.add(buttonPanel, BorderLayout.SOUTH);
-        refreshRemaining();
         //-------------------------------------------------Menu Bar---------------------------------------------------//
         STAGES.add(BASE_ITEM);
         PARAM_STAGES.add(RANDOM_SUB_ITEM);
@@ -420,14 +464,9 @@ public class Set extends JFrame
     private final JButton PRE_SET_RESET = new JButton("RESET");
     private final JButton PRE_SET_SET = new JButton("SET");
     //=============================================Point-Buy Panel====================================================//
-    private final Map<Stat, JSpinner> spinnerMap= new EnumMap<>(Stat.class);
-    private static final int BUDGET = 27;
-    private final Map<Integer, Integer> costTable = Map.of(
-            8,0,9,1,
-            10,2,11,3,
-            12,4,13,5,
-            14,7,15,9
-    );
+    private final PointBuyRule pointBuyRule = new PointBuyRule();
+    private final EnumMap<Stat, JSpinner> spinnerMap= new EnumMap<>(Stat.class);
     private final JLabel remainingLabel = new JLabel();
     private final JButton applyButton = new JButton("APPLY");
+    private final JButton resetButton = new JButton("RESET");
 }

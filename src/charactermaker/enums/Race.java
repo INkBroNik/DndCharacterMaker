@@ -1,7 +1,6 @@
 package charactermaker.enums;
 
 import charactermaker.model.ChoiceStatBonusFeature;
-import charactermaker.model.FeatureIds;
 import charactermaker.model.RacialFeature;
 import charactermaker.model.StatBonusFeature;
 import java.util.List;

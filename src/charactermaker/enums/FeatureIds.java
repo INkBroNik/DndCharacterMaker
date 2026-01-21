@@ -1,4 +1,4 @@
-package charactermaker.model;
+package charactermaker.enums;
 
 import java.util.Optional;
 
