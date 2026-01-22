@@ -3,25 +3,30 @@ package charactermaker.model;
 import java.util.Objects;
 import java.util.function.Consumer;
 /**
- * Представляет один вариант выбора для персонажа.
- * Например, выбор +1 к характеристике или выбор навыка.
+ * {@link Choice} == Class that represent one variant for {@link CharacterHolder}
+ * Ex: +1 to stat
+ *
+ * @author Nikita Padalka
+ * @since 21/01/2026
  */
 public class Choice {
 
     private final String groupId;
     private final String choiceId;
-    private final String name;          // Название варианта (отображается в UI)
-    private final String description;   // Подробное описание, что делает выбор
-    private final int maxSelections;      // сколько можно выбрать из этой группы
+    private final String name;
+    private final String description;
+    private final int maxSelections;
     private final boolean exactRequired;
-    private final Consumer<CharacterHolder> applyAction;      // Действие, которое выполняется при выборе
+    private final Consumer<CharacterHolder> applyAction;
     private final Consumer<CharacterHolder> removeAction;
 
+    //============================================Constructor=========================================================//
+
     /**
-     * Конструктор
-     * @param name название варианта
-     * @param description описание варианта
-     * @param applyAction действие, которое будет выполнено на CharacterHolder
+     * Basic constructor
+     * @param name - name of variant
+     * @param description - description of variant
+     * @param applyAction - action that would be done to {@link CharacterHolder}
      */
     public Choice(
             String groupId,String localChoiceId, String name, String description,
@@ -39,20 +44,32 @@ public class Choice {
         this.removeAction = removeAction;
     }
 
+    //==============================================Accessors=========================================================//
+
     public String getGroupId()       { return groupId;          }
-    public String getChoiceId()      { return choiceId; }
-    public String getName()          { return name;              }
-    public String getDescription()   { return description;       }
-    public int getMaxSelections()    { return maxSelections;     }
-    public boolean isExactRequired() { return exactRequired;     }
+    public String getChoiceId()      { return choiceId;         }
+    public String getName()          { return name;             }
+    public String getDescription()   { return description;      }
+    public int getMaxSelections()    { return maxSelections;    }
+    public boolean isExactRequired() { return exactRequired;    }
 
     /**
-     * Применяет выбор к персонажу.
-     * Обычно вызывается после того, как игрок сделал выбор в диалоге.
+     * Apply choice to {@link CharacterHolder}
+     * @param character - where apply the choice
      */
     public void apply(CharacterHolder character) { applyAction.accept(character); }
+    /**
+     * Remove choice to {@link CharacterHolder}
+     * @param character - where remove the choice
+     */
     public void remove(CharacterHolder character) { if (removeAction != null) removeAction.accept(character); }
 
+    //=========================================ToString/Utilites======================================================//
+
+    /**
+     * Override of ToString method
+     * @return - name of the variant
+     */
     @Override
-    public String toString() { return name; } // Для отображения в списках/диалогах
+    public String toString()        { return name;              }
 }

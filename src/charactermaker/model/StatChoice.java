@@ -1,23 +1,31 @@
 package charactermaker.model;
 
 import charactermaker.enums.Stat;
-
 import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * Удобная фабрика для создания Choice, изменяющих характеристики.
- * Режимы:
- *  - DELTA: добавляет/вычитает delta (используется для racial bonuses)
- *  - ASSIGN: устанавливает значение base (используется для point-buy/standard-array)
+ * {@link StatChoice} == Fabric to creating {@link Choice} that changes Stats.
+ * Mods:
+ *  - DELTA: add/remove delta (used for racial bonuses)
+ *  - ASSIGN: set the base values
  *
- * Choice создаются с groupId и локальным localId = stat.name()
+ * @author Nikita Padalka
+ * @since 21/01/2026
  */
 public final class StatChoice {
 
     private StatChoice() {}
 
-    // DELTA: увеличивает/уменьшает значение (например +1)
+    /**
+     * DELTA - increase the Stat
+     * @param groupId - ID from source
+     * @param stat - Stat which has bonus
+     * @param delta - Bonus
+     * @param maxSelections - Number of selections
+     * @param exactRequired - exact required
+     * @return - Choice
+     */
     public static Choice delta(String groupId, Stat stat, int delta, int maxSelections, boolean exactRequired) {
         Objects.requireNonNull(groupId);
         Objects.requireNonNull(stat);
@@ -32,8 +40,15 @@ public final class StatChoice {
         return new Choice(groupId, localId, display, desc, maxSelections, exactRequired, apply, remove);
     }
 
-    // ASSIGN: присваивает конкретное base значение или добавляет очко (зависит от реализации setBaseStat)
-    // apply вызывает character.setBaseStat(stat, value) — он должен защищать от перезаписи
+    /**
+     * ASSIGN - assign the base value for stat
+     * @param groupId - ID of the source
+     * @param stat - Stat
+     * @param value - value of the base
+     * @param maxSelections - Number of selections
+     * @param exactRequired - - exact required
+     * @return - Choice
+     */
     public static Choice assignBase(String groupId, Stat stat, int value, int maxSelections, boolean exactRequired) {
         Objects.requireNonNull(groupId);
         Objects.requireNonNull(stat);

@@ -1,13 +1,22 @@
 package charactermaker.model;
 
+import charactermaker.enums.Dice;
 import charactermaker.enums.Stat;
-
 import java.util.*;
 
+/**
+ * {@link PointBuyRule} == One of Rules that can be to fill up {@link Stats} of {@link CharacterHolder}
+ * That one set the rules for buy stats for points
+ *
+ * @author Nikita Padalka
+ * @since 21/01/2026
+ */
 public class PointBuyRule implements StatGenerationRule{
 
     private final int budget;
     private final Map<Integer, Integer> costTable;
+
+    //=============================================Constructors=======================================================//
 
     public PointBuyRule() { this(27);}
 
@@ -24,19 +33,40 @@ public class PointBuyRule implements StatGenerationRule{
         costTable.put(15, 9);
     }
 
+    //================================================================================================================//
+
+    /**
+     * Generate the array
+     * @return - array
+     */
     @Override
     public List<Integer> generate() { return new ArrayList<>(Collections.nCopies(6,8)); }
 
-    @Override
-    public String getName() { return "Point Buy"; }
+    //==================================================Accessors=====================================================//
 
     @Override
-    public boolean isPointBuy() { return true; }
+    public String getName()         { return "Point Buy"; }
+    public int getBudget()          { return budget; }
 
-    public int getBudget() { return budget; }
+    /**
+     * Check that rule is Point Buy
+     * @return - true
+     */
+    @Override
+    public boolean isPointBuy()     { return true; }
 
-    public int costOf(int value) { return costTable.getOrDefault(value, Integer.MAX_VALUE); }
+    /**
+     * Return cost of value
+     * @param value - value to get a cost
+     * @return - cost
+     */
+    public int costOf(int value)    { return costTable.getOrDefault(value, Integer.MAX_VALUE); }
 
+    /**
+     * Get total cost of the values
+     * @param assigned - values of all assigned Stats
+     * @return - cost of all values
+     */
     public int totalCost(Map<Stat, Integer> assigned) {
         int sum = 0;
         for (int v : assigned.values()) {

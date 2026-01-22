@@ -2,6 +2,12 @@ package charactermaker.enums;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * {@link NameCulture} == Enum that storage the names for races divided by {@link Sex}
+ *
+ * @author Nikita Padalka
+ * @since 21/01/2026
+ */
 public enum NameCulture {
     DRAGONBORN  (
                 new String[] {  "Arjhan", "Balasar", "Donaar", "Ghesh", "Kriv",
@@ -68,19 +74,43 @@ public enum NameCulture {
     private final String[] nameFemale;
     private final String[] allNames;
 
+    /**
+     * Basic constructor
+     * @param nameMale - array of male names
+     * @param nameFemale - array of female names
+     */
     NameCulture(String[] nameMale, String[] nameFemale){
         this.nameMale = nameMale;
         this.nameFemale = nameFemale;
         this.allNames = merge(nameMale, nameFemale);
     }
-    public String randomName(Gender gender) {
-        return switch (gender) {
+
+    /**
+     * Get a sex and return a random name for this sex
+     * @param sex - {@link Sex}
+     * @return - Random name
+     */
+    public String randomName(Sex sex) {
+        return switch (sex) {
             case MALE -> randomFrom(nameMale);
             case FEMALE -> randomFrom(nameFemale);
             case UNKNOWN -> randomFrom(allNames);
         };
     }
+
+    /**
+     * return random thing from pull
+     * @param pool - array
+     * @return - name
+     */
     private String randomFrom(String[] pool) { return pool[ThreadLocalRandom.current().nextInt(pool.length)]; }
+
+    /**
+     * Merge tne to arrays together.
+     * @param a - array 1
+     * @param b - array 2
+     * @return - combine array
+     */
     private static String[] merge(String[] a, String[] b) {
         String[] result = new String[a.length + b.length];
         System.arraycopy(a,0, result, 0, a.length);

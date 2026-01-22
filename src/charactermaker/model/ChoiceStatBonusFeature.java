@@ -4,16 +4,23 @@ import charactermaker.enums.FeatureIds;
 import charactermaker.enums.Stat;
 
 /**
- * ChoiceStatBonusFeature.java - description
+ * {@link ChoiceStatBonusFeature} == Feature of {@link charactermaker.enums.Race}
+ * that give choice of Stat racial bonuses for user
  *
- * @author YOUR NAME
- * @since 19 Dec 2025, 10:37:38 am
+ * @author Nikita Padalka
+ * @since 21/01/2026
  */
 public class ChoiceStatBonusFeature implements RacialFeature{
     private final String groupId;
     private final int bonus;
     private final int maxSelections;
-    
+
+    /**
+     * Basic constructor
+     * @param raceId - From what race goes choice
+     * @param bonus - Plus what amount to stat
+     * @param maxSelections - Number of max selections
+     */
     public ChoiceStatBonusFeature
         (String raceId, int bonus, int maxSelections) {
         this.groupId = raceId + ":" + FeatureIds.STAT_CHOICE;
@@ -21,29 +28,33 @@ public class ChoiceStatBonusFeature implements RacialFeature{
         this.maxSelections = maxSelections;
     }
 
+    //================================================Accessors=======================================================//
+
     @Override
     public String getName() { return "Ability Score Increase"; }
-
     @Override
     public String getDescription() { return "Choose stats to increase"; }
 
+    //================================================================================================================//
+
+    /**
+     * Create pending StatChoices for all stat
+     * @param character - where holds info
+     */
     @Override
     public void apply(CharacterHolder character) {
-        // Создаём StatChoice для всех возможных статов
         for (Stat stat : Stat.values()) {
-                character.addPendingChoice(new Choice(
-                        groupId, stat.name(), stat.getName() + "+" + bonus,
-                        "Increase " + stat.getName() + " by " + bonus,
-                        maxSelections, true,
-                        c -> c.getStats().addRacialBonuses(stat, bonus),
-                        c -> c.getStats().addRacialBonuses(stat, -bonus)
-                ));
+            Choice choice = StatChoice.delta(groupId, stat, +bonus, maxSelections, true);
+            character.addPendingChoice(choice);
         }
     }
 
+    /**
+     * Delete all StatChoices for the Race
+     * @param character - where holds info
+     */
     @Override
     public void remove(CharacterHolder character) {
-        // Удаляем все StatChoice, которые были добавлены этим RacialFeature
         character.removeChoicesByGroupPrefix(groupId);
     }
 }

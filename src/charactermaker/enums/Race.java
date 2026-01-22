@@ -6,10 +6,15 @@ import charactermaker.model.StatBonusFeature;
 import java.util.List;
 
 /**
+ * {@link Race} == Enum that has races and race features.
  *
- * @author INkBr
+ * @author Nikita
+ * @since 21/01/2026
  */
 public enum Race {
+
+    //================================================================================================================//
+
     DRAGONBORN  ("Dragonborn",
                 "Proud and powerful with draconic ancestry.",
                 "DRAGONBORN", NameCulture.DRAGONBORN,
@@ -70,11 +75,21 @@ public enum Race {
                 new StatBonusFeature(Stat.CHA, 2)
                 );
 
+    //================================================================================================================//
+
     private final String displayName, description;
     private final List<RacialFeature> features;
     private final String id;
     private final NameCulture culture;
-    
+
+    /**
+     * Basic constructor
+     * @param displayName - Name of the Race
+     * @param description - Description of race
+     * @param id - ID of race
+     * @param culture - Names for races
+     * @param features - Features that Race has
+     */
     Race(String displayName, String description, String id, NameCulture culture, RacialFeature... features){
         this.displayName = displayName;
         this.description = description;
@@ -83,14 +98,29 @@ public enum Race {
         this.culture = culture;
     }
 
+    /**
+     * Method for finding race from name
+     * @param name - Name of race
+     * @return - Race
+     */
     public static Race findByName(String name){
         for (Race race : Race.values()){ if (race.getDisplayName().equals(name)){ return race; } }
         return null;
     }
 
+    //==============================================Accessors=========================================================//
+
     public String                   getDisplayName()            { return displayName;                }
     public String                   getDescription()            { return description;                }
     public List<RacialFeature>      getFeatures()               { return features;                   }
     public String                   getId()                     { return id;                         }
-    public String                   randomName(Gender gender)   { return culture.randomName(gender); }
+
+    //================================================================================================================//
+
+    /**
+     * Method that return random name.
+     * @param sex - sex of {@link charactermaker.model.CharacterHolder}
+     * @return - Random name
+     */
+    public String                   randomName(Sex sex)         { return culture.randomName(sex);    }
 }

@@ -1,10 +1,10 @@
 package charactermaker.model;
  
 /**
- * RacialFeature.java - description
+ * {@link RacialFeature} == Interface is the {@link Feature} and state the rules to be Racial feature
  *
- * @author YOUR NAME
- * @since 17 Dec 2025, 9:01:43 am
+ * @author Nikita Padalka
+ * @since 21/01/2026
  */
 public interface RacialFeature extends Feature{
     String getName();
