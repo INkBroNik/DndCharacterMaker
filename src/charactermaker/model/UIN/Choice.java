@@ -1,4 +1,6 @@
-package charactermaker.model;
+package charactermaker.model.UIN;
+
+import charactermaker.model.dataHolders.CharacterHolder;
 
 import java.util.Objects;
 import java.util.function.Consumer;

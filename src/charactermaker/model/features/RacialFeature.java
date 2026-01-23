@@ -1,5 +1,7 @@
-package charactermaker.model;
- 
+package charactermaker.model.features;
+
+import charactermaker.model.dataHolders.CharacterHolder;
+
 /**
  * {@link RacialFeature} == Interface is the {@link Feature} and state the rules to be Racial feature
  *

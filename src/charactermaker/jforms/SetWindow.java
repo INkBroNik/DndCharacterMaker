@@ -3,8 +3,14 @@ package charactermaker.jforms;
 import charactermaker.enums.Sex;
 import charactermaker.enums.Race;
 import charactermaker.enums.Stat;
-import charactermaker.model.*;
-import charactermaker.model.Choice;
+import charactermaker.model.UIN.Choice;
+import charactermaker.model.UIN.StatAllocation;
+import charactermaker.model.dataHolders.CharacterHolder;
+import charactermaker.model.rules.DiceRollRule;
+import charactermaker.model.rules.PointBuyRule;
+import charactermaker.model.rules.StandardArrayRule;
+import charactermaker.model.rules.StatGenerationRule;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -28,9 +34,7 @@ public class SetWindow extends JFrame
      * Default constructor, set class properties
      */
     public SetWindow() {
-        int width = 200;
-        int height = 50;
-        dimension = new Dimension(width, height);
+        dimension = new Dimension(200, 50);
         gridLayout = new GridLayout(3,3,5,5);
         set();
         baseSetButton.addActionListener((e) -> {
@@ -50,6 +54,7 @@ public class SetWindow extends JFrame
                 }
 
                 System.out.println(CHARACTER);
+                print(CHARACTER.toString());
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog
                         (this, "ERORR!\n Please reenter the fields!",
@@ -74,6 +79,7 @@ public class SetWindow extends JFrame
         randomResetButton.addActionListener(e -> {
             CHARACTER.resetBaseStats();
             randomOutput.setText("Base stats been re-set");
+            print(CHARACTER.toString());
         });
 
         preSetSetButton.addActionListener(e -> {
@@ -87,6 +93,7 @@ public class SetWindow extends JFrame
         preSetResetButton.addActionListener(e -> {
             CHARACTER.resetBaseStats();
             preSetOutput.setText("Base stats been re-set");
+            print(CHARACTER.toString());
         });
 
         applyButton.addActionListener(e -> {
@@ -143,6 +150,7 @@ public class SetWindow extends JFrame
             }
             JOptionPane.showMessageDialog(this, "Applied base stats.");
             System.out.println(CHARACTER);
+            print(CHARACTER.toString());
         });
 
         resetButton.addActionListener(e -> {
@@ -150,10 +158,10 @@ public class SetWindow extends JFrame
            onSpinnerChanged(null);
         });
 
-        baseItem.addActionListener(e -> cardLayout.show(cardsPanel, "BASE"));
-        randomSubItem.addActionListener(e -> cardLayout.show(cardsPanel, "RANDOM"));
-        preSetSubItem.addActionListener(e -> cardLayout.show(cardsPanel, "PRE-SET"));
-        pointBuySubItem.addActionListener(e -> cardLayout.show(cardsPanel, "POINT-BUY"));
+        baseItem.addActionListener          (e -> cardLayout.show(cardsPanel, "BASE"));
+        randomSubItem.addActionListener     (e -> cardLayout.show(cardsPanel, "RANDOM"));
+        preSetSubItem.addActionListener     (e -> cardLayout.show(cardsPanel, "PRE-SET"));
+        pointBuySubItem.addActionListener   (e -> cardLayout.show(cardsPanel, "POINT-BUY"));
 
         setDefaultCloseOperation(SetWindow.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -323,6 +331,7 @@ public class SetWindow extends JFrame
             JOptionPane.showMessageDialog(this, "Failed to apply allocation: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
         System.out.println(CHARACTER.toString());
+        print(CHARACTER.toString());
     }
 
     private void onSpinnerChanged(ChangeEvent e) {
@@ -356,6 +365,13 @@ public class SetWindow extends JFrame
     private void cleanTheBaseStats() {
         for (Stat s : Stat.values()) { if(CHARACTER.isBaseAssigned(s)) CHARACTER.clearBaseStat(s); }
     }
+
+    private void print(String text){
+        consol.setText("");
+        consol.append(text + "\n");
+        consol.setCaretPosition(consol.getDocument().getLength());
+    }
+
     /**
      * SetWindow the window
      */
@@ -363,6 +379,14 @@ public class SetWindow extends JFrame
         //------------------------------------------------Main Frame--------------------------------------------------//
         setLayout(new BorderLayout(10,10));
         add(cardsPanel, BorderLayout.CENTER);
+        consol.setEditable(false);
+        consol.setFont( new Font("Consolas", Font.ITALIC, 14));
+        consol.setBackground(new Color(237, 226, 163));
+        consol.setForeground(new Color(38, 19, 7));
+        consol.setLineWrap(true);
+        consol.setWrapStyleWord(true);
+        JScrollPane  scroll = new JScrollPane(consol);
+        add(scroll, BorderLayout.NORTH);
         setJMenuBar(menuBar);
         //------------------------------------------------Base Panel--------------------------------------------------//
         basePanel.setLayout(gridLayout);
@@ -431,6 +455,7 @@ public class SetWindow extends JFrame
     //=============================================Card Panel Group===================================================//
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardsPanel = new JPanel(cardLayout);
+    private final JTextArea consol = new JTextArea(10, 20);
     //==================================================Panels========================================================//
     private final JPanel basePanel = new JPanel();
     private final JPanel randomParamPanel = new JPanel();

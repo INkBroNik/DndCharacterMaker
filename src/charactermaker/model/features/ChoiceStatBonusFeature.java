@@ -1,7 +1,10 @@
-package charactermaker.model;
+package charactermaker.model.features;
 
 import charactermaker.enums.FeatureIds;
 import charactermaker.enums.Stat;
+import charactermaker.model.UIN.Choice;
+import charactermaker.model.UIN.StatChoice;
+import charactermaker.model.dataHolders.CharacterHolder;
 
 /**
  * {@link ChoiceStatBonusFeature} == Feature of {@link charactermaker.enums.Race}

@@ -1,8 +1,12 @@
-package charactermaker.model;
+package charactermaker.model.dataHolders;
 
 import charactermaker.enums.Sex;
 import charactermaker.enums.Race;
 import charactermaker.enums.Stat;
+import charactermaker.model.UIN.Choice;
+import charactermaker.model.features.RacialFeature;
+import charactermaker.model.UIN.StatAllocation;
+
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;

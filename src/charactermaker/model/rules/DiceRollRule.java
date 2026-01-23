@@ -1,6 +1,8 @@
-package charactermaker.model;
+package charactermaker.model.rules;
 
 import charactermaker.enums.Dice;
+import charactermaker.model.dataHolders.CharacterHolder;
+import charactermaker.model.dataHolders.Stats;
 
 import java.util.ArrayList;
 import java.util.List;

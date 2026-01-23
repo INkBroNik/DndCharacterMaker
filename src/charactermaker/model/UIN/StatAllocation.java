@@ -1,6 +1,8 @@
-package charactermaker.model;
+package charactermaker.model.UIN;
 
 import charactermaker.enums.Stat;
+import charactermaker.model.dataHolders.CharacterHolder;
+
 import java.util.*;
 
 /**

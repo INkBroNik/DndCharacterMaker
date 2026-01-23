@@ -1,4 +1,7 @@
-package charactermaker.model;
+package charactermaker.model.rules;
+
+import charactermaker.model.dataHolders.CharacterHolder;
+import charactermaker.model.dataHolders.Stats;
 
 import java.util.Arrays;
 import java.util.List;

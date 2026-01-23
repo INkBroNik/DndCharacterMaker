@@ -1,8 +1,10 @@
 package charactermaker.enums;
 
-import charactermaker.model.ChoiceStatBonusFeature;
-import charactermaker.model.RacialFeature;
-import charactermaker.model.StatBonusFeature;
+import charactermaker.model.features.ChoiceStatBonusFeature;
+import charactermaker.model.features.RacialFeature;
+import charactermaker.model.features.StatBonusFeature;
+import charactermaker.model.dataHolders.CharacterHolder;
+
 import java.util.List;
 
 /**
@@ -119,7 +121,7 @@ public enum Race {
 
     /**
      * Method that return random name.
-     * @param sex - sex of {@link charactermaker.model.CharacterHolder}
+     * @param sex - sex of {@link CharacterHolder}
      * @return - Random name
      */
     public String                   randomName(Sex sex)         { return culture.randomName(sex);    }

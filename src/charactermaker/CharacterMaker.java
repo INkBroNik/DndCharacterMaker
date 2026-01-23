@@ -1,6 +1,8 @@
 package charactermaker;
 
 import charactermaker.jforms.SetWindow;
+import charactermaker.jforms.ViewCharacterWindow;
+
 import javax.swing.JOptionPane;
 
 /**
@@ -16,7 +18,7 @@ public class CharacterMaker
 {
     private static final String TITLE = "CharacterMaker";
     private static final String[] USER_CHOSE = {
-    "Create a Character", "EXIT"
+    "Create a Character", "View the Characters", "EXIT"
     };
     
     /**
@@ -28,6 +30,7 @@ public class CharacterMaker
             showMessage("Hello");
             String userChose = getChose("What you want to do?");
             if (userChose.equalsIgnoreCase(USER_CHOSE[0])) new SetWindow();
+//            if (userChose.equalsIgnoreCase(USER_CHOSE[1])) new ViewCharacterWindow();
             if (userChose.equalsIgnoreCase(USER_CHOSE[1])) System.exit(0);
         });
     }

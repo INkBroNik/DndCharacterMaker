@@ -1,4 +1,4 @@
-package charactermaker.model;
+package charactermaker.model.rules;
 
 import java.util.List;
 

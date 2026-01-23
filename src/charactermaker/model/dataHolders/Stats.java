@@ -1,6 +1,7 @@
-package charactermaker.model;
+package charactermaker.model.dataHolders;
  
 import charactermaker.enums.Stat;
+
 import java.util.EnumMap;
 
 /**
@@ -67,11 +68,11 @@ public class Stats
     @Override
     public String toString(){
     return "\tStats:"   +
-           "\n\t\t\tSTR:"   + getTotal(Stat.STR) +
-           "\n\t\t\tDEX:"   + getTotal(Stat.DEX) +
-           "\n\t\t\tCON:"   + getTotal(Stat.CON) +
-           "\n\t\t\tINT:"   + getTotal(Stat.INT) +
-           "\n\t\t\tWIS:"   + getTotal(Stat.WIS) +
-           "\n\t\t\tCHA:"   + getTotal(Stat.CHA);
+           "\n\t\tSTR:"   + getTotal(Stat.STR) +
+           "\n\t\tDEX:"   + getTotal(Stat.DEX) +
+           "\n\t\tCON:"   + getTotal(Stat.CON) +
+           "\n\t\tINT:"   + getTotal(Stat.INT) +
+           "\n\t\tWIS:"   + getTotal(Stat.WIS) +
+           "\n\t\tCHA:"   + getTotal(Stat.CHA);
     }
 }

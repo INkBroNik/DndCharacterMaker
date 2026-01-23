@@ -1,4 +1,6 @@
-package charactermaker.model;
+package charactermaker.model.features;
+
+import charactermaker.model.dataHolders.CharacterHolder;
 
 /**
  * {@link Feature} == Interface that set the rules to be a feature

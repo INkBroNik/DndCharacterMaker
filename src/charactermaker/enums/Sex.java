@@ -1,7 +1,9 @@
 package charactermaker.enums;
 
+import charactermaker.model.dataHolders.CharacterHolder;
+
 /**
- * {@link Sex} == Enum that contain the sex for {@link charactermaker.model.CharacterHolder}
+ * {@link Sex} == Enum that contain the sex for {@link CharacterHolder}
  *
  * @author Nikita Padalka
  * @since 21/01/2026

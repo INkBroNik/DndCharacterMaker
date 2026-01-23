@@ -1,6 +1,7 @@
-package charactermaker.model;
+package charactermaker.model.features;
 
 import charactermaker.enums.Stat;
+import charactermaker.model.dataHolders.CharacterHolder;
 
 /**
  * {@link StatBonusFeature} == Class that work under rules of {@link RacialFeature}
