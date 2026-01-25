@@ -7,6 +7,7 @@ import charactermaker.model.UIN.Choice;
 import charactermaker.model.features.RacialFeature;
 import charactermaker.model.UIN.StatAllocation;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,6 +19,10 @@ import java.util.logging.Logger;
  * @since 26/01/2026
  */
 public class CharacterHolder {
+    long id;
+    String owner;
+    LocalDateTime createdAt;
+
     private String name;
     private int age;
     private int level;
@@ -31,6 +36,11 @@ public class CharacterHolder {
     private final List<Choice> appliedChoices = new ArrayList<>();
 
     private static final Logger LOGGER = Logger.getLogger(CharacterHolder.class.getName());
+
+    //================================================================================================================//
+
+    public  CharacterHolder() { this.createdAt = LocalDateTime.now(); }
+
     //============================================Basic getters/setters===============================================//
 
     public String getName()                 { return name; }
@@ -44,8 +54,8 @@ public class CharacterHolder {
 
     public Stats getStats()                 { return stats; }
 
-    public Sex getGender()                  { return sex; }
-    public void setGender(Sex sex)          { this.sex = sex; }
+    public Sex getSex()                     { return sex; }
+    public void setSex(Sex sex)             { this.sex = sex; }
 
     public Race getRace()                   { return race; }
 
@@ -292,6 +302,13 @@ public class CharacterHolder {
         }
     }
 
+    //=======================================================Author info==============================================//
+
+    public void setId(long id)          { this.id = id;         }
+    public long getId()                 { return this.id;       }
+    public void setOwner(String owner)  { this.owner = owner;   }
+    public String getOwner()            { return this.owner;    }
+
     //===================================================toString / utility===========================================//
 
     /**
@@ -309,5 +326,47 @@ public class CharacterHolder {
                 "\n\tLevel:\t"  + level                     +
                 "\n\tRace:\t"   + raceName                  +
                 "\n"            + stats;
+    }
+
+    public CharacterHolder copy() {
+        CharacterHolder copy = new CharacterHolder();
+
+        copy.name = this.name;
+        copy.age = this.age;
+        copy.level = this.level;
+
+        copy.getStats().copyFrom(this.getStats());
+        copy.race = this.race;
+        copy.appliedFeatures.clear();
+        copy.appliedFeatures.addAll(this.appliedFeatures);
+
+        // copy pending choices
+        copy.pendingChoices.clear();
+        copy.pendingChoices.addAll(this.pendingChoices);
+
+        // copy appliedChoicesCount map
+        copy.appliedChoicesCount.clear();
+        copy.appliedChoicesCount.putAll(this.appliedChoicesCount);
+
+        try {
+            java.lang.reflect.Field appliedChoicesField = CharacterHolder.class.getDeclaredField("appliedChoices");
+            appliedChoicesField.setAccessible(true);
+            Object ac = appliedChoicesField.get(this);
+            if (ac instanceof java.util.List) {
+                @SuppressWarnings("unchecked")
+                java.util.List<Choice> applied = (java.util.List<Choice>) ac;
+                // ensure target has list and copy contents
+                java.util.List<Choice> target = (java.util.List<Choice>) appliedChoicesField.get(copy);
+                target.clear();
+                target.addAll(applied);
+            }
+        } catch (NoSuchFieldException | IllegalAccessException ex) {
+            // ignore: optional appliedChoices field not present
+        }
+        copy.owner = this.owner;
+        copy.id = this.id;
+        copy.createdAt = this.createdAt;
+
+        return copy;
     }
 }

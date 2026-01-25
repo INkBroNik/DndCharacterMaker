@@ -1,9 +1,15 @@
 package charactermaker;
 
+import charactermaker.jforms.CreateAndShowWindow;
 import charactermaker.jforms.SetWindow;
-import charactermaker.jforms.ViewCharacterWindow;
+import charactermaker.model.autorization.CharacterService;
+import charactermaker.model.autorization.UserSevice;
+import charactermaker.model.dataHolders.CharacterHolder;
+import charactermaker.model.dataHolders.DataBase;
+import charactermaker.model.dataHolders.DataStore;
 
 import javax.swing.JOptionPane;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * CharacterMaker - Final project for CS40S.
@@ -26,13 +32,22 @@ public class CharacterMaker
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        CharacterHolder character = new CharacterHolder();
+        CountDownLatch latch = new CountDownLatch(1);
         javax.swing.SwingUtilities.invokeLater(() -> {
             showMessage("Hello");
-            String userChose = getChose("What you want to do?");
-            if (userChose.equalsIgnoreCase(USER_CHOSE[0])) new SetWindow();
-//            if (userChose.equalsIgnoreCase(USER_CHOSE[1])) new ViewCharacterWindow();
-            if (userChose.equalsIgnoreCase(USER_CHOSE[1])) System.exit(0);
+            try{
+                DataStore dataStore = new DataStore("data.json");
+                UserSevice userSevice = new UserSevice(dataStore);
+                CharacterService characterService = new CharacterService(dataStore);
+                new CreateAndShowWindow(userSevice, characterService, latch);
+            } catch (Exception e) { e.printStackTrace(); }
         });
+        try {
+            latch.await();
+        } catch (InterruptedException e) { e.printStackTrace(); }
+
+        System.out.println("huy");
     }
     
     /**
@@ -41,16 +56,5 @@ public class CharacterMaker
      */
     private static void showMessage(String text) {
         JOptionPane.showMessageDialog(null, text, TITLE, JOptionPane.PLAIN_MESSAGE);
-    }
-    
-    /**
-     * Get a chose from user
-     * @return chose in String
-     */
-    private static String getChose(String text) {
-        Object chose = JOptionPane.showInputDialog
-        (null, text, TITLE, JOptionPane.PLAIN_MESSAGE,
-        null, USER_CHOSE, USER_CHOSE[0]);
-        return chose.toString();
     }
 }

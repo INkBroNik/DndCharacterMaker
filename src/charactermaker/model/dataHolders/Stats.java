@@ -57,6 +57,19 @@ public class Stats
         return racial.getOrDefault(stat, 0) + b;
     }
 
+    public void copyFrom(Stats src){
+        this.base.clear();
+        this.base.putAll(src.base);
+        this.racial.clear();
+        this.racial.putAll(src.racial);
+    }
+
+    public Stats copy(){
+        Stats stats = new Stats();
+        stats.copyFrom(this);
+        return stats;
+    }
+
     //==============================================Accessors=========================================================//
 
     public  Integer     getBase(Stat stat)                      { return base.get(stat); }

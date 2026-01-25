@@ -15,8 +15,11 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * SetWindow.java - Class for all UI
@@ -24,16 +27,17 @@ import java.util.List;
  * @author Nikita Padalka
  * @since 13 Dec 2025, 7:52:38 pm
  */
-public class SetWindow extends JFrame
+public class SetWindow extends JDialog
 {
     private final Dimension dimension;
     private final GridLayout gridLayout;
-    private static final CharacterHolder CHARACTER = new CharacterHolder();
+    private static CharacterHolder CHARACTER;
 
     /**
      * Default constructor, set class properties
      */
-    public SetWindow() {
+    public SetWindow(CharacterHolder character) {
+        CHARACTER = character;
         dimension = new Dimension(200, 50);
         gridLayout = new GridLayout(3,3,5,5);
         set();
@@ -48,12 +52,11 @@ public class SetWindow extends JFrame
                 age = Integer.parseInt(ageField.getText());
 
                 CHARACTER.applyRace(race); CHARACTER.setName(name); CHARACTER.setAge(age);
-                CHARACTER.setLevel(level); CHARACTER.setGender(sex);
+                CHARACTER.setLevel(level); CHARACTER.setSex(sex);
                 if (!CHARACTER.getPendingChoices().isEmpty()) {
                     showChoiceDialog(CHARACTER, CHARACTER.getPendingChoices(), 2, true);
                 }
 
-                System.out.println(CHARACTER);
                 print(CHARACTER.toString());
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog
@@ -149,7 +152,6 @@ public class SetWindow extends JFrame
                 return;
             }
             JOptionPane.showMessageDialog(this, "Applied base stats.");
-            System.out.println(CHARACTER);
             print(CHARACTER.toString());
         });
 
@@ -163,7 +165,11 @@ public class SetWindow extends JFrame
         preSetSubItem.addActionListener     (e -> cardLayout.show(cardsPanel, "PRE-SET"));
         pointBuySubItem.addActionListener   (e -> cardLayout.show(cardsPanel, "POINT-BUY"));
 
-        setDefaultCloseOperation(SetWindow.EXIT_ON_CLOSE);
+        submitButton.addActionListener      (e -> {
+            dispose();
+        });
+
+        setDefaultCloseOperation(SetWindow.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         pack();
         setResizable(false);
@@ -330,7 +336,6 @@ public class SetWindow extends JFrame
         } catch (RuntimeException ex) {
             JOptionPane.showMessageDialog(this, "Failed to apply allocation: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-        System.out.println(CHARACTER.toString());
         print(CHARACTER.toString());
     }
 
@@ -387,6 +392,7 @@ public class SetWindow extends JFrame
         consol.setWrapStyleWord(true);
         JScrollPane  scroll = new JScrollPane(consol);
         add(scroll, BorderLayout.NORTH);
+        add(submitButton, BorderLayout.SOUTH);
         setJMenuBar(menuBar);
         //------------------------------------------------Base Panel--------------------------------------------------//
         basePanel.setLayout(gridLayout);
@@ -456,6 +462,7 @@ public class SetWindow extends JFrame
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardsPanel = new JPanel(cardLayout);
     private final JTextArea consol = new JTextArea(10, 20);
+    private final JButton submitButton = new JButton("Submit");
     //==================================================Panels========================================================//
     private final JPanel basePanel = new JPanel();
     private final JPanel randomParamPanel = new JPanel();
