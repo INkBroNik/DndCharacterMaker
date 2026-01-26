@@ -3,11 +3,14 @@ package charactermaker.jforms;
 import charactermaker.model.autorization.CharacterService;
 import charactermaker.model.autorization.UserSevice;
 import charactermaker.model.dataHolders.CharacterHolder;
-
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
 public class CreateAndShowWindow extends JFrame {
@@ -37,21 +40,26 @@ public class CreateAndShowWindow extends JFrame {
         cardsPanel.add(buildLoginPanel(), "LOGIN");
         cardsPanel.add(buildEditorPanel(), "EDITOR");
         add(cardsPanel, BorderLayout.CENTER);
+        orphans.addActionListener(ev -> showOrphanManager());
+        admin.setEnabled(false);
+        admin.add(orphans);
+        menuBar.add(admin);
+        setJMenuBar(menuBar);
     }
 
     private JPanel buildLoginPanel() {
         JPanel panel = new JPanel(new GridLayout(3,2,5,5));
         panel.add(new JLabel("Username:"));
-        panel.add(new JLabel("Password:"));
+        loginUserField.setText("");
         panel.add(loginUserField);
+        panel.add(new JLabel("Password:"));
+        loginPasswordField.setText("");
         panel.add(loginPasswordField);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(1,2,5,5));
         JButton loginButton = new JButton("Login");
         JButton registerButton = new JButton("Register");
-        buttonPanel.add(loginButton);
-        buttonPanel.add(registerButton);
-        panel.add(buttonPanel);
+        panel.add(loginButton);
+        panel.add(registerButton);
 
         loginButton.addActionListener(e -> doLogin());
         registerButton.addActionListener(e -> doRegister());
@@ -61,6 +69,8 @@ public class CreateAndShowWindow extends JFrame {
     private JPanel buildEditorPanel() {
         JPanel panel = new JPanel(new BorderLayout(5,5));
         characterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        characterList.setCellRenderer(new CharacterCellRenderer());
+        characterList.setFixedCellHeight(64);
         JScrollPane scrollPane = new JScrollPane(characterList);
         panel.add(scrollPane, BorderLayout.CENTER);
         JPanel rightPanel = new JPanel(new GridLayout(2,2,5,5));
@@ -80,17 +90,47 @@ public class CreateAndShowWindow extends JFrame {
         addButton.addActionListener(e -> onAdd());
         editButton.addActionListener(e -> onEdit());
         deleteButton.addActionListener(e -> onDelete());
-        logoutButton.addActionListener(e -> { currentUser = null; showLogin(); });
+        logoutButton.addActionListener(e -> { currentUser = null; updateMenuForUser(null); showLogin(); });
 
         characterList.addListSelectionListener(e -> {
             CharacterHolder selectedValue = characterList.getSelectedValue();
             if (selectedValue != null) { details.setText(renderDetails(selectedValue)); }
             else  { details.setText(""); }
         });
+        characterList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int idx = characterList.locationToIndex(e.getPoint());
+                if (idx < 0) return;
+                characterList.setSelectedIndex(idx);
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    onEdit(); // двойной клик → редактирование
+                }
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    JPopupMenu menu = new JPopupMenu();
+                    JMenuItem edit = new JMenuItem("Edit");
+                    JMenuItem del = new JMenuItem("Delete");
+                    edit.addActionListener(a -> onEdit());
+                    del.addActionListener(a -> onDelete());
+                    menu.add(edit); menu.add(del); menu.addSeparator();
+                    menu.show(characterList, e.getX(), e.getY());
+                }
+            }
+        });
+
         return panel;
     }
 
+    private boolean mathces(CharacterHolder c, String q) {
+        return c.getName().toLowerCase().contains(q)
+                || c.getRace().getDisplayName().contains(q)
+                || String.valueOf(c.getLevel()).contains(q);
+    }
+
     private String renderDetails(CharacterHolder selectedValue) {
+        if(selectedValue == null) {
+            return "";
+        }
         return selectedValue.toString();
     }
 
@@ -125,7 +165,9 @@ public class CreateAndShowWindow extends JFrame {
         String username = loginUserField.getText().trim();
         String password = new String(loginPasswordField.getPassword());
         if(userSevice.autheticate(username, password)) {
+            if (userSevice.isAdmin(username)) showOrphanManager();
             currentUser = username;
+            updateMenuForUser(currentUser);
             refreshCharacterList();
             showEditor();
         } else {
@@ -164,6 +206,141 @@ public class CreateAndShowWindow extends JFrame {
         for(CharacterHolder c : characterService.getCharactersFor(currentUser)) listModel.addElement(c);
     }
 
+    private void showOrphanManager() {
+        java.util.List<CharacterHolder> orphans = characterService.getOrphans();
+        if (orphans.isEmpty() || !currentUser.equals("Author")) {
+            JOptionPane.showMessageDialog(
+                    this, "No unassigned character found.",
+                    "Orphan Manager", JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        } // ничего не делать
+
+        // Таблица
+        String[] cols = {"ID", "Name", "Created", "Owner"};
+        Object[][] data = new Object[orphans.size()][cols.length];
+        for (int i = 0; i < orphans.size(); i++) {
+            CharacterHolder c = orphans.get(i);
+            data[i][0] = c.getId();
+            data[i][1] = c.getName();
+            data[i][2] = c.getCreatedAt();
+            data[i][3] = c.getOwner();
+        }
+        JTable table = new JTable(data, cols);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+        JScrollPane scroll = new JScrollPane(table);
+        JPanel panel = new JPanel(new BorderLayout(6,6));
+        panel.add(new JLabel("Unassigned characters — you can claim, assign or delete"), BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        JPanel btns = new JPanel();
+        JButton claimBtn = new JButton("Claim selected to me");
+        JButton assignBtn = new JButton("Assign to...");
+        JButton sysBtn = new JButton("Assign to 'system'");
+        JButton delBtn = new JButton("Delete selected");
+        JButton exportBtn = new JButton("Export selected JSON");
+        btns.add(claimBtn); btns.add(assignBtn); btns.add(sysBtn); btns.add(delBtn); btns.add(exportBtn);
+        panel.add(btns, BorderLayout.SOUTH);
+
+        JDialog dlg = new JDialog(this, "Orphan Manager", true);
+        dlg.setContentPane(panel);
+        dlg.setSize(900, 400);
+        dlg.setLocationRelativeTo(this);
+
+        claimBtn.addActionListener(e -> {
+            int[] sel = table.getSelectedRows();
+            if (sel.length == 0) { JOptionPane.showMessageDialog(dlg, "Select rows"); return; }
+            int success = 0, conflict = 0;
+            for (int r : sel) {
+                long id = ((Number) table.getValueAt(r, 0)).longValue();
+                int res = characterService.claimOrphan(id, currentUser);
+                if (res == 0) success++; else if (res == 1) conflict++;
+            }
+            JOptionPane.showMessageDialog(dlg, String.format("Claimed: %d, Conflicts: %d", success, conflict));
+            refreshCharacterList();
+            dlg.dispose();
+        });
+
+        assignBtn.addActionListener(e -> {
+            String to = JOptionPane.showInputDialog(dlg, "Assign to username:");
+            if (to == null || to.isBlank()) return;
+            int[] sel = table.getSelectedRows();
+            int count = 0;
+            for (int r : sel) {
+                long id = ((Number) table.getValueAt(r, 0)).longValue();
+                // force-assign (bypass claim): implement method if needed; for simplicity use claimOrphan then assignOrphansTo for selection
+                int res = characterService.claimOrphan(id, to);
+                if (res == 0) count++;
+                else {
+                    // if conflict, try force-assign
+                    // skip for now
+                }
+            }
+            JOptionPane.showMessageDialog(dlg, "Assigned: " + count);
+            refreshCharacterList();
+            dlg.dispose();
+        });
+
+        sysBtn.addActionListener(e -> {
+            int[] sel = table.getSelectedRows();
+            int count = 0;
+            for (int r : sel) {
+                long id = ((Number) table.getValueAt(r, 0)).longValue();
+                int res = characterService.claimOrphan(id, "system");
+                if (res == 0) count++;
+            }
+            JOptionPane.showMessageDialog(dlg, "Assigned to system: " + count);
+            refreshCharacterList();
+            dlg.dispose();
+        });
+
+        delBtn.addActionListener(e -> {
+            int[] sel = table.getSelectedRows();
+            if (sel.length == 0) return;
+            int yn = JOptionPane.showConfirmDialog(dlg, "Delete selected permanently?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (yn != JOptionPane.YES_OPTION) return;
+            int removed = 0;
+            for (int i = sel.length - 1; i >= 0; i--) { // удаляем с конца
+                int r = sel[i];
+                long id = ((Number) table.getValueAt(r, 0)).longValue();
+                if (characterService.deleteCharacter(id)) removed++;
+            }
+            JOptionPane.showMessageDialog(dlg, "Removed: " + removed);
+            refreshCharacterList();
+            dlg.dispose();
+        });
+
+        exportBtn.addActionListener(e -> {
+            int[] sel = table.getSelectedRows();
+            if (sel.length == 0) return;
+            java.util.List<CharacterHolder> toExport = new ArrayList<>();
+            for (int r : sel) {
+                long id = ((Number) table.getValueAt(r, 0)).longValue();
+                for (CharacterHolder c : characterService.getAllCharacters()) {
+                    if (c.getId() == id) { toExport.add(c); break; }
+                }
+            }
+            // просто сохранить выбранные в файл
+            JFileChooser fc = new JFileChooser();
+            if (fc.showSaveDialog(dlg) == JFileChooser.APPROVE_OPTION) {
+                try (FileWriter fw = new FileWriter(fc.getSelectedFile())) {
+                    new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(toExport, fw);
+                    JOptionPane.showMessageDialog(dlg, "Exported");
+                } catch (Exception ex) { ex.printStackTrace(); JOptionPane.showMessageDialog(dlg, "Failed"); }
+            }
+        });
+
+        dlg.setVisible(true);
+    }
+
+    private void updateMenuForUser(String username){
+        boolean adminMode = userSevice.isAdmin(username);
+        admin.setEnabled(adminMode);
+        menuBar.revalidate();
+        menuBar.repaint();
+    }
+
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardsPanel = new JPanel(cardLayout);
     private String currentUser;
@@ -171,6 +348,10 @@ public class CreateAndShowWindow extends JFrame {
     private final JPasswordField loginPasswordField = new JPasswordField();
     private final DefaultListModel<CharacterHolder> listModel = new DefaultListModel<>();
     private final JList<CharacterHolder> characterList = new JList<>(listModel);
+    private final JTextField searchField = new JTextField(20);
     private UserSevice userSevice;
     private CharacterService characterService;
+    private final JMenuBar menuBar = new JMenuBar();
+    private final JMenu admin = new JMenu("Admin");
+    private final JMenuItem orphans = new JMenuItem("Orphans Manager");
 }

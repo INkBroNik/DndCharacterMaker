@@ -1,5 +1,8 @@
 package charactermaker.model.dataHolders;
 
+import charactermaker.model.autorization.OwnerChange;
+import charactermaker.model.features.RacialFeature;
+import charactermaker.model.features.RacialFeatureAdapter;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
@@ -13,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 public class DataStore {
     private final Path path;
@@ -34,6 +38,7 @@ public class DataStore {
                                 (json, typeOfT, context) -> 
                                         LocalDateTime.parse(json.getAsString())
                 )
+                .registerTypeAdapter(RacialFeature.class, new RacialFeatureAdapter())
                 .setPrettyPrinting()
                 .create();
         load();
@@ -67,4 +72,29 @@ public class DataStore {
             Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         }
     }
+
+    // В DataStore.java (или где у тебя load())
+    private void normalizeOrphansOnLoad() {
+        boolean changed = false;
+        for (CharacterHolder c : database.characters) {
+            if (c.getOwner() == null || c.getOwner().trim().isEmpty()) {
+                c.setOwner("unassigned");
+                // добавим мета-поля, если их нет (см. модель ниже)
+                if (c.getHistory() == null) c.setHistory(new ArrayList<>());
+                c.getHistory().add(new OwnerChange("system", "unassigned", LocalDateTime.now(), "normalized on load"));
+                changed = true;
+            }
+        }
+        if (changed) {
+            try {
+                // делаем бэкап перед сохранением изменений
+                Path backup = Paths.get(path.toString() + ".bak");
+                Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
+                save();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }

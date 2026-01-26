@@ -4,6 +4,7 @@ import charactermaker.enums.Sex;
 import charactermaker.enums.Race;
 import charactermaker.enums.Stat;
 import charactermaker.model.UIN.Choice;
+import charactermaker.model.autorization.OwnerChange;
 import charactermaker.model.features.RacialFeature;
 import charactermaker.model.UIN.StatAllocation;
 
@@ -19,9 +20,10 @@ import java.util.logging.Logger;
  * @since 26/01/2026
  */
 public class CharacterHolder {
-    long id;
-    String owner;
-    LocalDateTime createdAt;
+    private long id;
+    private String owner;
+    private LocalDateTime createdAt;
+    private List<OwnerChange> history = new ArrayList<>();
 
     private String name;
     private int age;
@@ -304,10 +306,14 @@ public class CharacterHolder {
 
     //=======================================================Author info==============================================//
 
-    public void setId(long id)          { this.id = id;         }
-    public long getId()                 { return this.id;       }
-    public void setOwner(String owner)  { this.owner = owner;   }
-    public String getOwner()            { return this.owner;    }
+    public void setId(long id)                          { this.id = id;                 }
+    public long getId()                                 { return this.id;               }
+    public void setOwner(String owner)                  { this.owner = owner;           }
+    public String getOwner()                            { return this.owner;            }
+    public List<OwnerChange> getHistory()               { return history;               }
+    public void setHistory(List<OwnerChange> history)   { this.history = history;       }
+    public LocalDateTime getCreatedAt()                 { return createdAt;             }
+    public void setCreatedAt(LocalDateTime createdAt)   { this.createdAt = createdAt;   }
 
     //===================================================toString / utility===========================================//
 

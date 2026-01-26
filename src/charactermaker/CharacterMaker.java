@@ -1,11 +1,9 @@
 package charactermaker;
 
 import charactermaker.jforms.CreateAndShowWindow;
-import charactermaker.jforms.SetWindow;
 import charactermaker.model.autorization.CharacterService;
 import charactermaker.model.autorization.UserSevice;
 import charactermaker.model.dataHolders.CharacterHolder;
-import charactermaker.model.dataHolders.DataBase;
 import charactermaker.model.dataHolders.DataStore;
 
 import javax.swing.JOptionPane;
@@ -46,8 +44,6 @@ public class CharacterMaker
         try {
             latch.await();
         } catch (InterruptedException e) { e.printStackTrace(); }
-
-        System.out.println("huy");
     }
     
     /**

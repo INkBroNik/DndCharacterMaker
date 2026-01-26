@@ -10,16 +10,12 @@ import charactermaker.model.rules.DiceRollRule;
 import charactermaker.model.rules.PointBuyRule;
 import charactermaker.model.rules.StandardArrayRule;
 import charactermaker.model.rules.StatGenerationRule;
-
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * SetWindow.java - Class for all UI
@@ -41,6 +37,11 @@ public class SetWindow extends JDialog
         dimension = new Dimension(200, 50);
         gridLayout = new GridLayout(3,3,5,5);
         set();
+        if(character.getName() != null && !character.getName().isEmpty()) nameField.setText(character.getName());
+        if(character.getAge() != 0) ageField.setText(Integer.toString(character.getAge()));
+        if(character.getRace() != null) raceComboBox.setSelectedItem(character.getRace());
+        if(character.getSex() != null) sexComboBox.setSelectedItem(character.getSex());
+
         baseSetButton.addActionListener((e) -> {
             Race race = Race.findByName((String) raceComboBox.getSelectedItem());
             Sex sex = Sex.findByName((String) sexComboBox.getSelectedItem());
@@ -56,7 +57,6 @@ public class SetWindow extends JDialog
                 if (!CHARACTER.getPendingChoices().isEmpty()) {
                     showChoiceDialog(CHARACTER, CHARACTER.getPendingChoices(), 2, true);
                 }
-
                 print(CHARACTER.toString());
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog
@@ -141,9 +141,7 @@ public class SetWindow extends JDialog
                         );
                         return;
                     }
-                } else {
-                    return;
-                }
+                } else { return; }
             } catch(RuntimeException ex){
                 JOptionPane.showMessageDialog(
                         this, "Failed to apply allocation: " + ex.getMessage(),
@@ -164,10 +162,7 @@ public class SetWindow extends JDialog
         randomSubItem.addActionListener     (e -> cardLayout.show(cardsPanel, "RANDOM"));
         preSetSubItem.addActionListener     (e -> cardLayout.show(cardsPanel, "PRE-SET"));
         pointBuySubItem.addActionListener   (e -> cardLayout.show(cardsPanel, "POINT-BUY"));
-
-        submitButton.addActionListener      (e -> {
-            dispose();
-        });
+        submitButton.addActionListener      (e -> dispose());
 
         setDefaultCloseOperation(SetWindow.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -187,7 +182,6 @@ public class SetWindow extends JDialog
     (CharacterHolder character, List<Choice> pendingChoices, int maxSelections, boolean requireExact) {
         if (pendingChoices == null || pendingChoices.isEmpty()) return;
 
-        // Диалог модальный
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
                 "Make your choices", Dialog.ModalityType.APPLICATION_MODAL);
         JPanel panel = new JPanel(new BorderLayout(8,8));
@@ -221,23 +215,19 @@ public class SetWindow extends JDialog
         bottom.add(ok);
         panel.add(bottom, BorderLayout.SOUTH);
 
-        // Слушатель подсчёта выбранных чекбоксов
         Runnable updateOk = () -> {
             long count = boxes.stream().filter(AbstractButton::isSelected).count();
             if (requireExact) ok.setEnabled(count == maxSelections);
             else ok.setEnabled(count > 0 && count <= maxSelections);
         };
 
-        // Когда состояние чекбокса меняется — обновляем OK
         for (JCheckBox b : boxes) {
             b.addItemListener(e -> {
-                // update in EDT
                 SwingUtilities.invokeLater(updateOk);
             });
         }
 
         ok.addActionListener(e -> {
-            // Собираем выбранные Choice
             List<Choice> toApply = new ArrayList<>();
             for (int i = 0; i < boxes.size(); i++) {
                 if (boxes.get(i).isSelected()) {
@@ -245,18 +235,12 @@ public class SetWindow extends JDialog
                 }
             }
 
-            // Применяем через модель, последовательно
-            // character.applyChoice(...) бросит IllegalStateException если лимит исчерпан
             try {
                 for (Choice choice : toApply) {
-                    // Здесь мы передаём "maxSelections" как лимит для данной группы sourceId;
-                    // модель сама проверит конкретную логику (и уменьшит счётчик).
                     character.applyChoice(choice, maxSelections);
                 }
                 dialog.dispose();
-//                refreshStatsUI(); // обновляем UI после применения
             } catch (IllegalStateException ex) {
-                // Если модель запретила — покажем и не закроем диалог
                 JOptionPane.showMessageDialog
                         (dialog, ex.getMessage(), "Invalid choice", JOptionPane.WARNING_MESSAGE);
             }
@@ -313,7 +297,6 @@ public class SetWindow extends JDialog
                     );
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        // ❗ СБРОС ВСЕХ base-статов
                         for (Stat s : Stat.values()) allocation.clear(s);
                         output.setText("Base stats been re-set");
                         return; // полностью выходим из распределения
@@ -325,7 +308,9 @@ public class SetWindow extends JDialog
                 try {
                     allocation.assign(chosen, value);
                 } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(
+                            this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE
+                    );
                     continue;
                 }
                 break;
@@ -334,7 +319,10 @@ public class SetWindow extends JDialog
         try{
             CHARACTER.applyAllocation(allocation, false);
         } catch (RuntimeException ex) {
-            JOptionPane.showMessageDialog(this, "Failed to apply allocation: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    this, "Failed to apply allocation: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE
+            );
         }
         print(CHARACTER.toString());
     }
@@ -471,8 +459,8 @@ public class SetWindow extends JDialog
     //==================================================JMenu=========================================================//
     private final JMenuBar menuBar = new JMenuBar();
     private final JMenu stages = new JMenu("STAGES");
-    private final JMenu paramStages = new JMenu("PARAM");
-    private final JMenuItem baseItem = new JMenuItem("MAIN");
+    private final JMenu paramStages = new JMenu("PARAMETERS");
+    private final JMenuItem baseItem = new JMenuItem("BASE");
     private final JMenuItem preSetSubItem = new JMenuItem("PRE-SET");
     private final JMenuItem randomSubItem = new JMenuItem("RANDOM");
     private final JMenuItem pointBuySubItem = new JMenuItem("POINT-BUY");

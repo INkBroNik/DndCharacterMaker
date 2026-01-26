@@ -43,4 +43,9 @@ public class UserSevice {
             return false;
         }
     }
+
+    public boolean isAdmin(String username){
+        if (username == null) return false;
+        return "Author".equals(username) || "admin".equalsIgnoreCase(username);
+    }
 }
